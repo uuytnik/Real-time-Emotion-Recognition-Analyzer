@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时表情识别分析器 - Demo</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.8);
+            --text-muted: rgba(255, 255, 255, 0.6);
+            --danger-gradient: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        }
+
+        /* 淡入淡出过渡效果 */
+        .fade-enter-active,
+        .fade-leave-active {
+            transition: opacity 0.4s ease;
+        }
+
+        .fade-enter-from,
+        .fade-leave-to {
+            opacity: 0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+
+
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            color: var(--text-primary);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        #app {
+            width: 100%;
+            max-width: 800px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #app::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+
+        header h1 {
+            text-align: center;
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            animation: titleGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            0% { filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3)); }
+            100% { filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.6)); }
+        }
+
+        .tabs {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 4px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tabs::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: var(--tab-position, 4px);
+            width: calc(50% - 4px);
+            height: calc(100% - 8px);
+            background: var(--accent-gradient);
+            border-radius: 12px;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1;
+        }
+
+        .tabs[data-active="image"]::after {
+            --tab-position: calc(50% + 2px);
+        }
+
+        .tabs button {
+            flex: 1;
+            padding: 16px 24px;
+            font-size: 1em;
+            font-weight: 600;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .tabs button.active {
+            color: var(--text-primary);
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .tabs button:hover:not(.active) {
+            color: var(--text-primary);
+            transform: translateY(-1px);
+        }
+        
+        .main-content {
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            min-height: 350px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .main-content:hover {
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .main-content video, .main-content img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 16px;
+        }
+        
+        .main-content video {
+            transform: scaleX(-1);
+        }
+
+        .placeholder {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 40px;
+        }
+
+        .placeholder-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .placeholder div:last-child {
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+
+        .drop-zone {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 16px;
+            position: relative; /* 确保覆盖层可以正确定位 */
+        }
+        .drag-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(79, 172, 254, 0.5); /* 半透明蓝色 */
+            border-radius: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+            z-index: 10;
+            pointer-events: none; /* 允许事件穿透 */
+            transition: all 0.2s ease-in-out;
+        }
+        .overlay-content {
+            text-align: center;
+            color: white;
+            font-weight: 600;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .overlay-icon {
+            font-size: 48px;
+            animation: float 2s ease-in-out infinite;
+        }
+        .drop-zone.dragover {
+            background: rgba(76, 175, 254, 0.2);
+            border-color: #4facfe;
+            transform: scale(1.02);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 16px;
+        }
+
+        .control-button {
+            padding: 16px 32px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--accent-gradient);
+            color: white;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(79, 172, 254, 0.4);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .control-button:hover::before {
+            left: 100%;
+        }
+
+        .control-button.stop {
+            background: var(--danger-gradient);
+            box-shadow: 0 4px 20px rgba(255, 65, 108, 0.4);
+        }
+
+        .control-button:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 30px rgba(79, 172, 254, 0.6);
+        }
+
+        .control-button.stop:hover {
+            box-shadow: 0 8px 30px rgba(255, 65, 108, 0.6);
+        }
+
+        .results-area {
+            text-align: center;
+            min-height: 180px;
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .dominant-emotion {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 32px;
+            animation: emotionPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes emotionPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .dominant-emotion .emoji {
+            font-size: 4em;
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+            animation: emojiRotate 4s ease-in-out infinite;
+        }
+
+        @keyframes emojiRotate {
+            0%, 100% { transform: rotate(-5deg); }
+            50% { transform: rotate(5deg); }
+        }
+
+        .dominant-emotion .text {
+            font-size: 2.8em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .dominant-emotion .confidence {
+            font-size: 1.3em;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .emotion-distribution ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            text-align: left;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .emotion-distribution li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            padding: 8px 0;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .emotion-distribution li:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateX(4px);
+        }
+
+        .emotion-distribution .name {
+            width: 80px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .emotion-distribution .bar-container {
+            flex-grow: 1;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            margin: 0 16px;
+        }
+
+        .emotion-distribution .bar {
+            height: 100%;
+            background: var(--accent-gradient);
+            border-radius: 12px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .emotion-distribution .bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: barShimmer 2s ease-in-out infinite;
+        }
+
+        @keyframes barShimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .emotion-distribution .percent {
+            width: 60px;
+            text-align: right;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1em;
+        }
+        
+        .status-bar {
+            text-align: center;
+            padding: 16px 24px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 50px;
+            color: var(--text-secondary);
+            font-style: italic;
+            font-weight: 500;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .status-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 48%, rgba(255, 255, 255, 0.1) 50%, transparent 52%);
+            animation: statusShine 3s ease-in-out infinite;
+        }
+
+        @keyframes statusShine {
+            0%, 100% { transform: translateX(-100%); }
+            50% { transform: translateX(100%); }
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #ffffff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            body {
+                padding: 16px;
+            }
+
+            #app {
+                padding: 24px;
+            }
+
+            header h1 {
+                font-size: 2em;
+            }
+
+            .tabs button {
+                padding: 12px 16px;
+                font-size: 0.9em;
+            }
+
+            .main-content {
+                min-height: 280px;
+            }
+
+            .dominant-emotion {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .dominant-emotion .emoji {
+                font-size: 3em;
+            }
+
+            .dominant-emotion .text {
+                font-size: 2.2em;
+            }
+
+            .control-button {
+                padding: 14px 28px;
+                font-size: 1em;
+            }
+        }
+
+        /* 暗色主题增强 */
+        .results-area.analyzing {
+            background: rgba(79, 172, 254, 0.1);
+            border-color: rgba(79, 172, 254, 0.3);
+            animation: analyzeGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes analyzeGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(79, 172, 254, 0.2); }
+            50% { box-shadow: 0 0 40px rgba(79, 172, 254, 0.4); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <header>
+        <h1>实时表情识别分析器</h1>
+    </header>
+
+    <div class="tabs" :data-active="currentTab">
+        <button :class="{ active: currentTab === 'video' }" @click="switchTab('video')">实时视频分析</button>
+        <button :class="{ active: currentTab === 'image' }" @click="switchTab('image')">上传图片分析</button>
+    </div>
+
+    <main>
+        <div class="main-content">
+            <div v-if="currentTab === 'video'" style="width:100%; height: 100%;">
+                <video v-show="isAnalyzing" ref="videoRef" autoplay playsinline muted></video>
+                <div v-if="!isAnalyzing" class="placeholder">
+                    <div class="placeholder-icon">📷</div>
+                    <div>点击 "开始分析" 启动摄像头</div>
+                </div>
+            </div>
+
+            <div v-else class="drop-zone"
+                 @click="triggerFileInput"
+                 @dragover.prevent="onDragOver"
+                 @dragleave.prevent="onDragLeave"
+                 @drop.prevent="onDrop"
+                 :class="{ dragover: isDragOver }">
+
+                <img v-if="uploadedImage" :src="uploadedImage" alt="Uploaded Image" />
+                <div v-else class="placeholder">
+                    <div class="placeholder-icon">🖼️</div>
+                    <div>点击或拖拽图片到这里</div>
+                </div>
+                <input type="file" ref="fileInputRef" @change="onFileSelect" accept="image/*" style="display: none;">
+                <!-- ✨ 新增：拖拽覆盖层 -->
+                <div v-if="isDragOver" class="drag-overlay">
+                    <div class="overlay-content">
+                        <div class="overlay-icon">🚀</div>
+                        <div>释放即可分析</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div v-if="currentTab === 'video'" class="controls">
+            <button @click="toggleAnalysis" class="control-button"
+                    :class="{ stop: isAnalyzing }"
+                    :disabled="isLoading">
+                <!-- ✨ 新增 disabled 属性 -->
+                {{ isAnalyzing ? '停止分析' : '开始分析' }}
+            </button>
+        </div>
+    </main>
+
+    <section class="results-area" :class="{ analyzing: isLoading }">
+        <Transition name="fade" mode="out-in">
+
+            <!-- 状态一：当有分析结果时，显示这部分 -->
+            <div v-if="analysisResult" :key="'result'">
+                <!-- 这是你原来的结果展示代码，原封不动地搬进来 -->
+                <div class="dominant-emotion">
+                    <span class="emoji">{{ dominantEmotion.emoji }}</span>
+                    <div>
+                        <span class="text">{{ dominantEmotion.name }}</span>
+                        <div class="confidence">({{ dominantEmotion.score }}%)</div>
+                    </div>
+                </div>
+                <div class="emotion-distribution">
+                    <ul>
+                        <li v-for="emotion in sortedEmotions" :key="emotion.name">
+                            <span class="name">{{ emotion.name }}</span>
+                            <div class="bar-container">
+                                <div class="bar" :style="{ width: emotion.score + '%' }"></div>
+                            </div>
+                            <span class="percent">{{ emotion.score }}%</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 状态二：当正在加载时，显示这部分 -->
+            <div v-else-if="isLoading" class="placeholder" :key="'loading'">
+                <!-- 这是你原来的加载中代码，原封不动地搬进来 -->
+                <span class="loading-spinner"></span>
+                🧠 正在分析中...
+            </div>
+
+            <!-- 状态三：默认的空状态，显示这部分 -->
+            <div v-else class="placeholder" :key="'empty'">
+                <!-- 这是你原来的空状态代码 -->
+                分析结果将显示在这里
+            </div>
+
+        </Transition>
+    </section>
+    
+    <footer class="status-bar">
+        <span v-if="isLoading" class="loading-spinner"></span>
+        {{ statusMessage }}
+    </footer>
+
+    <canvas ref="canvasRef" style="display:none;"></canvas>
+</div>
+
+<script>
+    const { createApp, ref, computed, onUnmounted } = Vue;
+
+    createApp({
+        setup() {
+            const currentTab = ref('video');
+            const statusMessage = ref('准备就绪，请选择一种模式开始。');
+            const isAnalyzing = ref(false);
+            const isLoading = ref(false);
+            const analysisResult = ref(null);
+            const uploadedImage = ref(null);
+            const isDragOver = ref(false);
+
+            const videoRef = ref(null);
+            const canvasRef = ref(null);
+            const fileInputRef = ref(null);
+            let canvasContext = null;
+            
+            let stream = null;
+            //let analysisInterval = null;
+            let animationFrameId = null; // 用 rAF 的 ID 替代 interval ID
+            let lastAnalysisTimestamp = 0; // 记录上次分析的时间
+
+            const emotionMap = {
+                happy: { name: '高兴', emoji: '😄' },
+                sad: { name: '悲伤', emoji: '😢' },
+                angry: { name: '愤怒', emoji: '😡' },
+                surprise: { name: '惊讶', emoji: '😮' },
+                neutral: { name: '中性', emoji: '😐' },
+                fear: { name: '害怕', emoji: '😨' },
+                disgust: { name: '厌恶', emoji: '🤢' },
+            };
+
+            const dominantEmotion = computed(() => {
+                if (!analysisResult.value) return null;
+                const topEmotion = analysisResult.value[0];
+                return {
+                    ...emotionMap[topEmotion.emotion],
+                    score: topEmotion.score
+                };
+            });
+            
+            const sortedEmotions = computed(() => {
+                if (!analysisResult.value) return [];
+                return analysisResult.value.map(res => ({
+                    ...emotionMap[res.emotion],
+                    score: res.score
+                }));
+            });
+
+            const switchTab = (tab) => {
+                currentTab.value = tab;
+                stopAnalysis();
+                analysisResult.value = null;
+                uploadedImage.value = null;
+                statusMessage.value = '准备就绪，请操作。';
+            };
+
+            const toggleAnalysis = () => {
+                if (isAnalyzing.value) {
+                    stopAnalysis();
+                } else {
+                    startAnalysis();
+                }
+            };
+
+            const startAnalysis = async () => {
+                statusMessage.value = '正在请求摄像头权限...';
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                    videoRef.value.srcObject = stream;
+                    isAnalyzing.value = true;
+                    statusMessage.value = '摄像头已启动，开始实时分析...';
+                    //analysisInterval = setInterval(captureAndAnalyzeFrame, 1000);
+                    lastAnalysisTimestamp = 0; // 重置时间戳
+                    animationFrameId = requestAnimationFrame(analysisLoop); // 启动新的循环
+                } catch (error) {
+                    console.error("无法访问摄像头:", error);
+                    statusMessage.value = '错误：无法访问摄像头，请检查权限。';
+                }
+            };
+            
+            const stopAnalysis = () => {
+                //if (analysisInterval) clearInterval(analysisInterval);
+                if (animationFrameId) cancelAnimationFrame(animationFrameId); // 取消 rAF 循环
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+                isAnalyzing.value = false;
+                stream = null;
+                //analysisInterval = null;
+                animationFrameId = null;
+                if(currentTab.value === 'video') statusMessage.value = '分析已停止。';
+            };
+
+            /*const captureAndAnalyzeFrame = () => {
+                if (!videoRef.value || !canvasRef.value) return;
+                const video = videoRef.value;
+                const canvas = canvasRef.value;
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const context = canvas.getContext('2d');
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = canvas.toDataURL('image/jpeg');
+                
+                if(!isLoading.value) mockAnalyzeAPI(imageData);
+            };*/
+            const analysisLoop = (timestamp) => {
+                // 1. 如果分析已停止，则彻底退出循环
+                if (!isAnalyzing.value) return;
+
+                // 2. 先检查时间是否已经超过1秒的间隔
+                if (timestamp - lastAnalysisTimestamp > 1000) {
+
+                    // 3. 【关键】只有在满足条件后，才更新“上次分析的时间”
+                    lastAnalysisTimestamp = timestamp;
+
+                    // 4. 执行捕获和分析的核心逻辑
+                    if (!videoRef.value || !canvasRef.value) return;
+                    const video = videoRef.value;
+                    const canvas = canvasRef.value;
+
+                    // ✨ 新增：定义分析的目标尺寸
+                    const analysisSize = 480;
+
+                    // 避免在视频还没加载完成时出错
+                    if (video.videoWidth === 0) {
+                        animationFrameId = requestAnimationFrame(analysisLoop);
+                        return;
+                    }
+
+                    //canvas.width = video.videoWidth;
+                    //canvas.height = video.videoHeight;
+                    canvas.width = analysisSize;
+                    canvas.height = analysisSize;
+                    const context = canvas.getContext('2d');
+                    context.drawImage(video, 0, 0, analysisSize, analysisSize);
+                    const imageData = canvas.toDataURL('image/jpeg', 0.8);
+
+                    // 触发模拟的API调用
+                    if (!isLoading.value) {
+                        mockAnalyzeAPI(imageData);
+                    }
+                }
+
+                // 5. 无论本次是否分析，都预约下一帧的检查，以保持循环持续运行
+                animationFrameId = requestAnimationFrame(analysisLoop);
+            };
+            const triggerFileInput = () => fileInputRef.value.click();
+            const onDragOver = () => isDragOver.value = true;
+            const onDragLeave = () => isDragOver.value = false;
+            
+            const onDrop = (event) => {
+                isDragOver.value = false;
+                const file = event.dataTransfer.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    processFile(file);
+                }
+            };
+            
+            const onFileSelect = (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    processFile(file);
+                }
+                event.target.value = '';
+            };
+
+            const processFile = (file) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    uploadedImage.value = e.target.result;
+                    statusMessage.value = '图片上传成功，正在分析...';
+                    mockAnalyzeAPI(e.target.result);
+                };
+                reader.readAsDataURL(file);
+            };
+
+            const mockAnalyzeAPI = async (imageData) => {
+                isLoading.value = true;
+                analysisResult.value = null;
+                statusMessage.value = "🧠 正在发送数据并分析..."
+
+                try {
+                    await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 500));
+                
+                    const emotions = ['happy', 'sad', 'angry', 'surprise', 'neutral', 'fear', 'disgust'];
+                    let scores = emotions.map(() => Math.random() * 20);
+                    const dominantIndex = Math.floor(Math.random() * emotions.length);
+                    scores[dominantIndex] = 50 + Math.random() * 50;
+                
+                    const totalScore = scores.reduce((sum, score) => sum + score, 0);
+                    const normalizedScores = scores.map(score => Math.round((score / totalScore) * 100));
+
+                    const result = emotions.map((emotion, index) => ({
+                        emotion,
+                        score: normalizedScores[index]
+                    })).sort((a, b) => b.score - a.score);
+
+                    analysisResult.value = result;
+                    isLoading.value = false;
+                    statusMessage.value = '分析完成！';
+
+                } catch (error) {
+                    console.error("分析过程中发生错误:", error);
+                    statusMessage.value = '❌ 分析失败，请重试。';
+                    analysisResult.value = null; // 清空结果
+                } finally {
+                    // ✨ 无论成功或失败，最后都要把加载状态关掉
+                    isLoading.value = false;
+                }
+            };
+            
+            onUnmounted(() => {
+                stopAnalysis();
+            });
+
+            return {
+                currentTab,
+                statusMessage,
+                isAnalyzing,
+                isLoading,
+                analysisResult,
+                uploadedImage,
+                isDragOver,
+                videoRef,
+                canvasRef,
+                fileInputRef,
+                dominantEmotion,
+                sortedEmotions,
+                switchTab,
+                toggleAnalysis,
+                triggerFileInput,
+                onDragOver,
+                onDragLeave,
+                onDrop,
+                onFileSelect,
+            };
+        }
+    }).mount('#app');
+</script>
+
+</body>
+</html>
