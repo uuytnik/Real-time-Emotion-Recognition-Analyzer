@@ -22,11 +22,25 @@
             --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
         }
 
+        /* 淡入淡出过渡效果 */
+        .fade-enter-active,
+        .fade-leave-active {
+            transition: opacity 0.4s ease;
+        }
+
+        .fade-enter-from,
+        .fade-leave-to {
+            opacity: 0;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
+
+
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -214,8 +228,35 @@
             cursor: pointer;
             transition: all 0.3s ease;
             border-radius: 16px;
+            position: relative; /* 确保覆盖层可以正确定位 */
+        }
+        .drag-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(79, 172, 254, 0.5); /* 半透明蓝色 */
+            border-radius: 16px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(4px);
+            z-index: 10;
+            pointer-events: none; /* 允许事件穿透 */
+            transition: all 0.2s ease-in-out;
+        }
+        .overlay-content {
+            text-align: center;
+            color: white;
+            font-weight: 600;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
 
+        .overlay-icon {
+            font-size: 48px;
+            animation: float 2s ease-in-out infinite;
+        }
         .drop-zone.dragover {
             background: rgba(76, 175, 254, 0.2);
             border-color: #4facfe;
@@ -518,57 +559,79 @@
                 </div>
             </div>
 
-            <div v-else class="drop-zone" 
-                @click="triggerFileInput"
-                @dragover.prevent="onDragOver"
-                @dragleave.prevent="onDragLeave"
-                @drop.prevent="onDrop"
-                :class="{ dragover: isDragOver }">
-                
-                <img v-if="uploadedImage" :src="uploadedImage" alt="Uploaded Image"/>
+            <div v-else class="drop-zone"
+                 @click="triggerFileInput"
+                 @dragover.prevent="onDragOver"
+                 @dragleave.prevent="onDragLeave"
+                 @drop.prevent="onDrop"
+                 :class="{ dragover: isDragOver }">
+
+                <img v-if="uploadedImage" :src="uploadedImage" alt="Uploaded Image" />
                 <div v-else class="placeholder">
                     <div class="placeholder-icon">🖼️</div>
                     <div>点击或拖拽图片到这里</div>
                 </div>
                 <input type="file" ref="fileInputRef" @change="onFileSelect" accept="image/*" style="display: none;">
+                <!-- ✨ 新增：拖拽覆盖层 -->
+                <div v-if="isDragOver" class="drag-overlay">
+                    <div class="overlay-content">
+                        <div class="overlay-icon">🚀</div>
+                        <div>释放即可分析</div>
+                    </div>
+                </div>
             </div>
         </div>
         
         <div v-if="currentTab === 'video'" class="controls">
-            <button @click="toggleAnalysis" class="control-button" :class="{ stop: isAnalyzing }">
+            <button @click="toggleAnalysis" class="control-button"
+                    :class="{ stop: isAnalyzing }"
+                    :disabled="isLoading">
+                <!-- ✨ 新增 disabled 属性 -->
                 {{ isAnalyzing ? '停止分析' : '开始分析' }}
             </button>
         </div>
     </main>
 
     <section class="results-area" :class="{ analyzing: isLoading }">
-        <div v-if="analysisResult">
-            <div class="dominant-emotion">
-                <span class="emoji">{{ dominantEmotion.emoji }}</span>
-                <div>
-                    <span class="text">{{ dominantEmotion.name }}</span>
-                    <div class="confidence">({{ dominantEmotion.score }}%)</div>
+        <Transition name="fade" mode="out-in">
+
+            <!-- 状态一：当有分析结果时，显示这部分 -->
+            <div v-if="analysisResult" :key="'result'">
+                <!-- 这是你原来的结果展示代码，原封不动地搬进来 -->
+                <div class="dominant-emotion">
+                    <span class="emoji">{{ dominantEmotion.emoji }}</span>
+                    <div>
+                        <span class="text">{{ dominantEmotion.name }}</span>
+                        <div class="confidence">({{ dominantEmotion.score }}%)</div>
+                    </div>
+                </div>
+                <div class="emotion-distribution">
+                    <ul>
+                        <li v-for="emotion in sortedEmotions" :key="emotion.name">
+                            <span class="name">{{ emotion.name }}</span>
+                            <div class="bar-container">
+                                <div class="bar" :style="{ width: emotion.score + '%' }"></div>
+                            </div>
+                            <span class="percent">{{ emotion.score }}%</span>
+                        </li>
+                    </ul>
                 </div>
             </div>
-            <div class="emotion-distribution">
-                <ul>
-                    <li v-for="emotion in sortedEmotions" :key="emotion.name">
-                        <span class="name">{{ emotion.name }}</span>
-                        <div class="bar-container">
-                            <div class="bar" :style="{ width: emotion.score + '%' }"></div>
-                        </div>
-                        <span class="percent">{{ emotion.score }}%</span>
-                    </li>
-                </ul>
-            </div>
-        </div>
-        <div v-else class="placeholder">
-            <div v-if="isLoading">
+
+            <!-- 状态二：当正在加载时，显示这部分 -->
+            <div v-else-if="isLoading" class="placeholder" :key="'loading'">
+                <!-- 这是你原来的加载中代码，原封不动地搬进来 -->
                 <span class="loading-spinner"></span>
                 🧠 正在分析中...
             </div>
-            <div v-else>分析结果将显示在这里</div>
-        </div>
+
+            <!-- 状态三：默认的空状态，显示这部分 -->
+            <div v-else class="placeholder" :key="'empty'">
+                <!-- 这是你原来的空状态代码 -->
+                分析结果将显示在这里
+            </div>
+
+        </Transition>
     </section>
     
     <footer class="status-bar">
@@ -595,9 +658,12 @@
             const videoRef = ref(null);
             const canvasRef = ref(null);
             const fileInputRef = ref(null);
+            let canvasContext = null;
             
             let stream = null;
-            let analysisInterval = null;
+            //let analysisInterval = null;
+            let animationFrameId = null; // 用 rAF 的 ID 替代 interval ID
+            let lastAnalysisTimestamp = 0; // 记录上次分析的时间
 
             const emotionMap = {
                 happy: { name: '高兴', emoji: '😄' },
@@ -649,7 +715,9 @@
                     videoRef.value.srcObject = stream;
                     isAnalyzing.value = true;
                     statusMessage.value = '摄像头已启动，开始实时分析...';
-                    analysisInterval = setInterval(captureAndAnalyzeFrame, 1000);
+                    //analysisInterval = setInterval(captureAndAnalyzeFrame, 1000);
+                    lastAnalysisTimestamp = 0; // 重置时间戳
+                    animationFrameId = requestAnimationFrame(analysisLoop); // 启动新的循环
                 } catch (error) {
                     console.error("无法访问摄像头:", error);
                     statusMessage.value = '错误：无法访问摄像头，请检查权限。';
@@ -657,17 +725,19 @@
             };
             
             const stopAnalysis = () => {
-                if (analysisInterval) clearInterval(analysisInterval);
+                //if (analysisInterval) clearInterval(analysisInterval);
+                if (animationFrameId) cancelAnimationFrame(animationFrameId); // 取消 rAF 循环
                 if (stream) {
                     stream.getTracks().forEach(track => track.stop());
                 }
                 isAnalyzing.value = false;
                 stream = null;
-                analysisInterval = null;
+                //analysisInterval = null;
+                animationFrameId = null;
                 if(currentTab.value === 'video') statusMessage.value = '分析已停止。';
             };
 
-            const captureAndAnalyzeFrame = () => {
+            /*const captureAndAnalyzeFrame = () => {
                 if (!videoRef.value || !canvasRef.value) return;
                 const video = videoRef.value;
                 const canvas = canvasRef.value;
@@ -678,8 +748,48 @@
                 const imageData = canvas.toDataURL('image/jpeg');
                 
                 if(!isLoading.value) mockAnalyzeAPI(imageData);
+            };*/
+            const analysisLoop = (timestamp) => {
+                // 1. 如果分析已停止，则彻底退出循环
+                if (!isAnalyzing.value) return;
+
+                // 2. 先检查时间是否已经超过1秒的间隔
+                if (timestamp - lastAnalysisTimestamp > 1000) {
+
+                    // 3. 【关键】只有在满足条件后，才更新“上次分析的时间”
+                    lastAnalysisTimestamp = timestamp;
+
+                    // 4. 执行捕获和分析的核心逻辑
+                    if (!videoRef.value || !canvasRef.value) return;
+                    const video = videoRef.value;
+                    const canvas = canvasRef.value;
+
+                    // ✨ 新增：定义分析的目标尺寸
+                    const analysisSize = 480;
+
+                    // 避免在视频还没加载完成时出错
+                    if (video.videoWidth === 0) {
+                        animationFrameId = requestAnimationFrame(analysisLoop);
+                        return;
+                    }
+
+                    //canvas.width = video.videoWidth;
+                    //canvas.height = video.videoHeight;
+                    canvas.width = analysisSize;
+                    canvas.height = analysisSize;
+                    const context = canvas.getContext('2d');
+                    context.drawImage(video, 0, 0, analysisSize, analysisSize);
+                    const imageData = canvas.toDataURL('image/jpeg', 0.8);
+
+                    // 触发模拟的API调用
+                    if (!isLoading.value) {
+                        mockAnalyzeAPI(imageData);
+                    }
+                }
+
+                // 5. 无论本次是否分析，都预约下一帧的检查，以保持循环持续运行
+                animationFrameId = requestAnimationFrame(analysisLoop);
             };
-            
             const triggerFileInput = () => fileInputRef.value.click();
             const onDragOver = () => isDragOver.value = true;
             const onDragLeave = () => isDragOver.value = false;
@@ -697,6 +807,7 @@
                 if (file) {
                     processFile(file);
                 }
+                event.target.value = '';
             };
 
             const processFile = (file) => {
@@ -713,25 +824,35 @@
                 isLoading.value = true;
                 analysisResult.value = null;
                 statusMessage.value = "🧠 正在发送数据并分析..."
-                
-                await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 500));
-                
-                const emotions = ['happy', 'sad', 'angry', 'surprise', 'neutral', 'fear', 'disgust'];
-                let scores = emotions.map(() => Math.random() * 20);
-                const dominantIndex = Math.floor(Math.random() * emotions.length);
-                scores[dominantIndex] = 50 + Math.random() * 50;
-                
-                const totalScore = scores.reduce((sum, score) => sum + score, 0);
-                const normalizedScores = scores.map(score => Math.round((score / totalScore) * 100));
 
-                const result = emotions.map((emotion, index) => ({
-                    emotion,
-                    score: normalizedScores[index]
-                })).sort((a, b) => b.score - a.score);
+                try {
+                    await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 500));
+                
+                    const emotions = ['happy', 'sad', 'angry', 'surprise', 'neutral', 'fear', 'disgust'];
+                    let scores = emotions.map(() => Math.random() * 20);
+                    const dominantIndex = Math.floor(Math.random() * emotions.length);
+                    scores[dominantIndex] = 50 + Math.random() * 50;
+                
+                    const totalScore = scores.reduce((sum, score) => sum + score, 0);
+                    const normalizedScores = scores.map(score => Math.round((score / totalScore) * 100));
 
-                analysisResult.value = result;
-                isLoading.value = false;
-                statusMessage.value = '分析完成！';
+                    const result = emotions.map((emotion, index) => ({
+                        emotion,
+                        score: normalizedScores[index]
+                    })).sort((a, b) => b.score - a.score);
+
+                    analysisResult.value = result;
+                    isLoading.value = false;
+                    statusMessage.value = '分析完成！';
+
+                } catch (error) {
+                    console.error("分析过程中发生错误:", error);
+                    statusMessage.value = '❌ 分析失败，请重试。';
+                    analysisResult.value = null; // 清空结果
+                } finally {
+                    // ✨ 无论成功或失败，最后都要把加载状态关掉
+                    isLoading.value = false;
+                }
             };
             
             onUnmounted(() => {
