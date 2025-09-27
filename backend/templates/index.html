@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>实时表情分析</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #74ebd5 0%, #ACB6E5 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    color: #333;
+  }
+  h1 {
+    margin-bottom: 20px;
+    color: #fff;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+  }
+  #video-container {
+    position: relative;
+    width: 480px;
+    height: 360px;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    margin-bottom: 20px;
+  }
+  #face-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 15px;
+  }
+  #dominant-emotion {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #ffeb3b;
+    text-shadow: 1px 1px 2px #000;
+  }
+  #emotion-bars {
+    width: 480px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .emotion-bar {
+    display: flex;
+    align-items: center;
+    height: 30px;
+    border-radius: 15px;
+    background: rgba(255,255,255,0.2);
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+    transition: transform 0.2s;
+  }
+  .emotion-bar span {
+    position: absolute;
+    left: 15px;
+    color: #fff;
+    font-weight: bold;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    z-index: 2;
+  }
+  .bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ff6a00, #ee0979);
+    transition: width 0.4s ease;
+  }
+  .dominant {
+    animation: pulse 1s infinite;
+    background: linear-gradient(90deg, #00ffcc, #00bfff) !important;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scaleX(1); }
+    50% { transform: scaleX(1.05); }
+  }
+</style>
+</head>
+<body>
+<h1>实时表情分析</h1>
+
+<div id="video-container">
+  <img id="face-img" src="/video_feed" alt="face">
+</div>
+
+<div id="dominant-emotion">主导情绪: --</div>
+
+<div id="emotion-bars">
+  <div class="emotion-bar" id="angry"><div class="bar-fill"></div><span>Angry</span></div>
+  <div class="emotion-bar" id="disgust"><div class="bar-fill"></div><span>Disgust</span></div>
+  <div class="emotion-bar" id="fear"><div class="bar-fill"></div><span>Fear</span></div>
+  <div class="emotion-bar" id="happy"><div class="bar-fill"></div><span>Happy</span></div>
+  <div class="emotion-bar" id="neutral"><div class="bar-fill"></div><span>Neutral</span></div>
+  <div class="emotion-bar" id="sad"><div class="bar-fill"></div><span>Sad</span></div>
+  <div class="emotion-bar" id="surprise"><div class="bar-fill"></div><span>Surprise</span></div>
+</div>
+
+<script>
+async function fetchEmotions() {
+  try {
+    const res = await fetch('/emotion');
+    const data = await res.json();
+    if (data.error) return;
+
+    let maxValue = -1;
+    let dominant = '';
+    for (const key in data) {
+      if (data[key] > maxValue) {
+        maxValue = data[key];
+        dominant = key;
+      }
+    }
+
+    // 更新主导情绪文字
+    document.getElementById('dominant-emotion').textContent = 
+      `主导情绪: ${dominant.charAt(0).toUpperCase() + dominant.slice(1)} (${maxValue.toFixed(1)}%)`;
+
+    for (const key in data) {
+      const bar = document.querySelector(`#${key} .bar-fill`);
+      bar.style.width = `${data[key].toFixed(1)}%`;
+      const container = document.getElementById(key);
+      if (key === dominant) {
+        bar.classList.add('dominant');
+        container.style.transform = 'scaleX(1.05)';
+      } else {
+        bar.classList.remove('dominant');
+        container.style.transform = 'scaleX(1)';
+      }
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+//在浏览器访问http://127.0.0.1:5000/
+// 每 0.1 秒刷新一次情绪条
+setInterval(fetchEmotions, 100);
+</script>
+</body>
+</html>
