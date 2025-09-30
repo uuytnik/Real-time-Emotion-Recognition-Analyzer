@@ -1,3 +1,5 @@
+---
+
 # 🎭 实时表情识别分析器
 
 > 基于深度学习的人工智能表情识别 Web 应用
@@ -11,27 +13,29 @@
 
 ## ✨ 项目特色
 
-- 🎯 **实时表情分析** - 通过摄像头实时捕捉并分析面部表情  
-- 🖼️ **图片上传分析** - 支持上传图片进行表情识别  
-- 🎨 **现代化 UI 设计** - 玻璃态设计 + 流畅动画效果  
-- 📱 **响应式布局** - 完美适配各种设备屏幕  
-- ⚡ **高性能优化** - 使用 `requestAnimationFrame` 实现高效分析循环  
+* 🎯 **实时表情分析** - 通过摄像头实时捕捉并分析面部表情
+* 🖼️ **图片上传分析** - 支持上传图片进行表情识别
+* 🎨 **现代化 UI 设计** - 玻璃态设计 + 流畅动画效果
+* 📱 **响应式布局** - 完美适配各种设备屏幕
+* ⚡ **高性能优化** - 使用 `requestAnimationFrame` 实现高效分析循环
 
 ---
 
 ## 🚀 快速开始
 
 ### 环境要求
-- Python 3.8+
-- 现代浏览器（支持 WebRTC）
+
+* Python 3.8+
+* 现代浏览器（支持 WebRTC）
 
 ### 安装与运行
 
 1. **克隆项目**
+
    ```bash
    git clone https://github.com/your-username/emotion-recognition.git
    cd emotion-recognition
-````
+   ```
 
 2. **安装 Python 依赖**
 
@@ -140,3 +144,5 @@ Response: { "emotions": { ... }, "dominant_emotion": "happy" }
 ## 🤝 贡献指南
 
 欢迎提交 Issue 和 Pull Request！
+
+---
