@@ -1,19 +1,28 @@
+你发的内容本身就是标准的 **Markdown**，已经可以直接在 GitHub、Typora、Notion、Obsidian 等支持 Markdown 的平台里渲染出精美效果。
+
+我帮你稍微整理一下，让结构更清晰、分隔更规整：
+
+````markdown
 # 🎭 实时表情识别分析器
 
 > 基于深度学习的人工智能表情识别 Web 应用
 
-![表情识别演示](https://img.shields.io/badge/表情识别-实时分析-blue)
+![表情识别](https://img.shields.io/badge/表情识别-实时分析-blue)
 ![Vue3](https://img.shields.io/badge/Vue3-前端框架-green)
 ![Flask](https://img.shields.io/badge/Flask-后端框架-red)
 ![DeepFace](https://img.shields.io/badge/DeepFace-AI模型-orange)
 
+---
+
 ## ✨ 项目特色
 
-- 🎯 **实时表情分析** - 通过摄像头实时捕捉并分析面部表情
-- 🖼️ **图片上传分析** - 支持上传图片进行表情识别
-- 🎨 **现代化 UI 设计** - 玻璃态设计 + 流畅动画效果
-- 📱 **响应式布局** - 完美适配各种设备屏幕
-- ⚡ **高性能优化** - 使用 requestAnimationFrame 实现高效分析循环
+- 🎯 **实时表情分析** - 通过摄像头实时捕捉并分析面部表情  
+- 🖼️ **图片上传分析** - 支持上传图片进行表情识别  
+- 🎨 **现代化 UI 设计** - 玻璃态设计 + 流畅动画效果  
+- 📱 **响应式布局** - 完美适配各种设备屏幕  
+- ⚡ **高性能优化** - 使用 `requestAnimationFrame` 实现高效分析循环  
+
+---
 
 ## 🚀 快速开始
 
@@ -27,101 +36,112 @@
    ```bash
    git clone https://github.com/your-username/emotion-recognition.git
    cd emotion-recognition
-安装 Python 依赖
-bash
-复制
-pip install -r requirements.txt
-启动后端服务
-bash
-复制
-python app.py
-打开前端页面
-bash
-复制
-# 直接打开 frontend.html
-# 或访问 http://localhost:5000
-🛠️ 技术栈
-前端技术
-Vue 3 - 渐进式 JavaScript 框架
-现代 CSS - 玻璃态设计、渐变动画
-WebRTC API - 摄像头访问
-Canvas API - 图像处理
-后端技术
-Flask - Python Web 框架
-DeepFace - 深度学习表情识别
-OpenCV - 计算机视觉处理
-CORS 支持 - 跨域请求处理
-📁 项目结构
-复制
+````
+
+2. **安装 Python 依赖**
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **启动后端服务**
+
+   ```bash
+   python app.py
+   ```
+
+4. **打开前端页面**
+   直接在浏览器中打开 `frontend.html` 或访问 `http://localhost:5000`
+
+---
+
+## 🛠️ 技术栈
+
+* **前端技术：** Vue 3、现代 CSS、WebRTC API、Canvas API
+* **后端技术：** Flask、DeepFace、OpenCV、CORS 支持
+
+---
+
+## 📁 项目结构
+
+```
 emotion-recognition/
-├── frontend.html          # 主前端页面
-├── app.py                 # Flask 后端服务
-├── requirements.txt       # Python 依赖
-├── README.md              # 项目说明
-├── 前端设计方案.md         # 详细设计文档
-├── 前后端对接方案.md       # 接口文档
-└── 团队协作规范.md         # 开发规范
-🎮 使用方式
-实时视频分析
-点击「实时视频分析」标签
-允许摄像头访问权限
-点击「开始分析」按钮
-查看实时表情识别结果
-图片上传分析
-点击「上传图片分析」标签
-拖拽或点击选择图片
-系统自动分析并显示结果
-📊 识别情绪类型
-表格
-复制
-情绪	中文	Emoji
-happy	高兴	😄
-sad	悲伤	😢
-angry	愤怒	😡
-surprise	惊讶	😮
-neutral	中性	😐
-fear	害怕	😨
-disgust	厌恶	🤢
-👥 团队协作
-团队成员
-成员 A - 后端开发 & AI 集成
-成员 B - 前端开发 & UI 设计
-成员 C - 项目管理 & 文档撰写
-成员 D - 测试验证 & 质量保证
-开发流程
-我们采用 Git Flow 工作流，详细规范请参考「团队协作规范.md」
-🔧 API 接口
-实时情绪分析
-http
-复制
+├── frontend.html        # 主前端页面
+├── app.py               # Flask 后端服务
+├── requirements.txt     # Python 依赖
+├── README.md            # 项目说明文档
+├── test.py              # 测试脚本
+├── camera_check.py      # 摄像头检查工具
+└── .gitignore           # Git 忽略配置
+```
+
+---
+
+## 🎮 使用方式
+
+### 实时视频分析
+
+1. 点击 "实时视频分析" 标签
+2. 允许摄像头访问权限
+3. 点击 "开始分析" 按钮
+4. 查看实时表情识别结果
+
+### 图片上传分析
+
+1. 点击 "上传图片分析" 标签
+2. 拖拽或点击选择图片
+3. 系统自动分析并显示结果
+
+---
+
+## 📊 识别情绪类型
+
+| 情绪       | 中文 | Emoji |
+| -------- | -- | ----- |
+| happy    | 高兴 | 😄    |
+| sad      | 悲伤 | 😢    |
+| angry    | 愤怒 | 😡    |
+| surprise | 惊讶 | 😮    |
+| fear     | 害怕 | 😨    |
+| disgust  | 厌恶 | 🤢    |
+| neutral  | 中性 | 😐    |
+
+---
+
+## 🔧 核心接口
+
+### 实时情绪分析
+
+```http
 GET /emotion
-响应示例：
-JSON
-复制
-{ "happy": 75.2, "sad": 12.1, ... }
-图片情绪分析
-http
-复制
+Response: { "happy": 75.2, "sad": 12.1, ... }
+```
+
+### 图片情绪分析
+
+```http
 POST /analyze_image
-请求体：
-JSON
-复制
-{ "image": "base64_string" }
-响应示例：
-JSON
-复制
-{ "emotions": { ... }, "dominant_emotion": "happy" }
-🎯 性能优化
-✅ 图像压缩处理（480×480 分辨率）
-✅ 分析频率控制（1 秒/次）
-✅ 内存泄漏防护
-✅ 错误边界处理
-📝 许可证
-本项目采用 MIT 许可证 —— 查看 LICENSE 文件了解详情。
-🤝 贡献指南
+Body: { "image": "base64_string" }
+Response: { "emotions": { ... }, "dominant_emotion": "happy" }
+```
+
+---
+
+## 👥 团队成员
+
+* **成员 A** - 后端开发 & AI 集成
+* **成员 B** - 前端开发 & UI 设计
+* **成员 C** - 项目管理 & 文档撰写
+* **成员 D** - 测试验证 & 质量保证
+
+---
+
+## 📝 许可证
+
+本项目采用 **MIT 许可证**
+
+---
+
+## 🤝 贡献指南
+
 欢迎提交 Issue 和 Pull Request！
-Fork 本仓库
-创建特性分支 (git checkout -b feature/AmazingFeature)
-提交更改 (git commit -m 'Add some AmazingFeature')
-推送到分支 (git push origin feature/AmazingFeature)
-开启 Pull Request
