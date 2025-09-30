@@ -1,0 +1,103 @@
+🎭 实时表情识别分析器
+基于深度学习的人工智能表情识别Web应用
+
+https://img.shields.io/badge/%E8%A1%A8%E6%83%85%E8%AF%86%E5%88%AB-%E5%AE%9E%E6%97%B6%E5%88%86%E6%9E%90-blue
+https://img.shields.io/badge/Vue3-%E5%89%8D%E7%AB%AF%E6%A1%86%E6%9E%B6-green
+https://img.shields.io/badge/Flask-%E5%90%8E%E7%AB%AF%E6%A1%86%E6%9E%B6-red
+https://img.shields.io/badge/DeepFace-AI%E6%A8%A1%E5%9E%8B-orange
+
+✨ 项目特色
+🎯 实时表情分析 - 通过摄像头实时捕捉并分析面部表情
+
+🖼️ 图片上传分析 - 支持上传图片进行表情识别
+
+🎨 现代化UI设计 - 玻璃态设计 + 流畅动画效果
+
+📱 响应式布局 - 完美适配各种设备屏幕
+
+⚡ 高性能优化 - 使用requestAnimationFrame实现高效分析循环
+
+🚀 快速开始
+环境要求
+Python 3.8+
+
+现代浏览器（支持WebRTC）
+
+安装与运行
+克隆项目
+
+bash
+git clone https://github.com/your-username/emotion-recognition.git
+cd emotion-recognition
+安装Python依赖
+
+bash
+pip install -r requirements.txt
+启动后端服务
+
+bash
+python app.py
+打开前端页面
+直接在浏览器中打开 frontend.html 或访问 http://localhost:5000
+
+🛠️ 技术栈
+前端技术： Vue 3、现代CSS、WebRTC API、Canvas API
+后端技术： Flask、DeepFace、OpenCV、CORS支持
+
+📁 项目结构
+text
+emotion-recognition/
+├── frontend.html          # 主前端页面
+├── app.py                # Flask后端服务
+├── requirements.txt      # Python依赖
+├── README.md            # 项目说明文档
+├── test.py              # 测试脚本
+├── camera_check.py      # 摄像头检查工具
+└── .gitignore          # Git忽略配置
+🎮 使用方式
+实时视频分析
+点击"实时视频分析"标签
+
+允许摄像头访问权限
+
+点击"开始分析"按钮
+
+查看实时表情识别结果
+
+图片上传分析
+点击"上传图片分析"标签
+
+拖拽或点击选择图片
+
+系统自动分析并显示结果
+
+📊 识别情绪类型
+情绪	中文	Emoji	情绪	中文	Emoji
+happy	高兴	😄	fear	害怕	😨
+sad	悲伤	😢	disgust	厌恶	🤢
+angry	愤怒	😡	neutral	中性	😐
+surprise	惊讶	😮			
+🔧 核心接口
+实时情绪分析
+http
+GET /emotion
+Response: { "happy": 75.2, "sad": 12.1, ... }
+图片情绪分析
+http
+POST /analyze_image
+Body: { "image": "base64_string" }
+Response: { "emotions": { ... }, "dominant_emotion": "happy" }
+👥 团队成员
+宋亦晨 - 后端开发 & AI集成
+
+龙俊海 - 前端开发 & UI设计
+
+陈殿泽 - 项目管理 & 文档撰写
+
+左得霖 - 测试验证 & 质量保证
+
+📝 许可证
+本项目采用 MIT 许可证
+
+🤝 贡献指南
+欢迎提交 Issue 和 Pull Request！
