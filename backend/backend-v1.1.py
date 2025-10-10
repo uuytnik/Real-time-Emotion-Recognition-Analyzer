@@ -1,5 +1,6 @@
 # Flask app.py - 完整的情绪识别后端
-from flask import Flask, Response, render_template, jsonify, request
+from flask import Flask, Response, render_template, jsonify, request, send_from_directory
+import os
 import cv2
 from deepface import DeepFace
 from flask_cors import CORS
@@ -104,8 +105,24 @@ def analyze_emotion(img_array):
 
 @app.route('/')
 def index():
-    """首页路由"""
-    return render_template('../frontend/frontend.html')
+    """首页路由
+
+    说明: 之前使用相对路径 `../frontend/frontend.html` 会导致
+    Jinja 无法找到模板（TemplateNotFound）。改为直接从前端
+    目录返回静态 HTML 文件，避免模板加载路径问题。
+    """
+    # 计算 frontend 目录的绝对路径（相对于本文件）
+    frontend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend'))
+    frontend_file = 'frontend.html'
+
+    # 如果文件不存在，返回一个简短的错误信息（方便调试）
+    if not os.path.exists(os.path.join(frontend_dir, frontend_file)):
+        return jsonify({
+            'success': False,
+            'error': f"前端文件未找到: {os.path.join(frontend_dir, frontend_file)}"
+        }), 500
+
+    return send_from_directory(frontend_dir, frontend_file)
 
 
 def gen_frames():
@@ -276,9 +293,17 @@ def internal_error(error):
 
 
 # 应用启动时的配置
-@app.before_first_request
 def startup():
-    """应用启动时的初始化"""
+    """应用启动时的初始化
+
+    NOTE: Flask 3.x 在 flask.Flask 对象上不一定暴露
+    the before_first_request decorator attribute when
+    referenced as @app.before_first_request at import time,
+    which can raise AttributeError in some environments.
+
+    To keep compatibility we call this function explicitly
+    from the __main__ block before app.run().
+    """
     print("=" * 50)
     print("情绪识别服务已启动")
     print(f"访问地址: http://127.0.0.1:5000")
@@ -297,7 +322,15 @@ def cleanup(error=None):
 if __name__ == '__main__':
     # 配置上传文件大小限制
     app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
-    
+    # 显示启动信息（兼容Flask不同版本）
+    try:
+        # 如果 Flask 环境支持 before_first_request，这里不会重复
+        # 注册，但我们仍然显式调用 startup() 以确保提示输出。
+        startup()
+    except Exception:
+        # 如果有任何意外，不阻塞应用启动
+        pass
+
     # 启动Flask应用
     app.run(
         host='0.0.0.0', 
